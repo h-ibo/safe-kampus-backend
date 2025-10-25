@@ -1,16 +1,15 @@
-# database.py
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-# PostgreSQL bağlantı URL'si
-DATABASE_URL = "postgresql://safekampus_user:Kartal1903!@localhost:5432/safekampus_db"
+DATABASE_URL = "postgresql+asyncpg://safekampus_user:guclu_bir_sifre@localhost/safekampus_db"
 
-# Engine oluştur
-engine = create_engine(DATABASE_URL)
+# Async engine
+engine = create_async_engine(DATABASE_URL, echo=True)
 
-# Session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Oturum oluşturucu
+SessionLocal = sessionmaker(
+    bind=engine, class_=AsyncSession, expire_on_commit=False
+)
 
-# Base class (tablolar bundan türeyecek)
+# Base sınıfı (model sınıfları buradan türetilir)
 Base = declarative_base()
