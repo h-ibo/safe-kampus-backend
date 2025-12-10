@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
+from .routers import users
 
 # Şimdilik router (users, events) eklemiyoruz, sadece altyapıyı kuruyoruz.
 
@@ -12,6 +13,8 @@ async def init_models():
 # Uygulamayı başlat
 app = FastAPI(title="SafeKampus API", on_startup=[init_models])
 
+
+
 # CORS Ayarları (Mobil bağlantı için şart)
 app.add_middleware(
     CORSMiddleware,
@@ -20,6 +23,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(users.router)
 
 @app.get("/")
 async def root():

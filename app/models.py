@@ -1,7 +1,18 @@
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP
-from database import Base
+from .database import Base
 from datetime import datetime
 
+# 1. KULLANICI TABLOSU (Hata veren eksik kısım buydu)
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    isim = Column(String(100), nullable=False)
+    email = Column(String(150), unique=True, nullable=False)
+    sifre = Column(String(150), nullable=False)
+    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+
+# 2. OLAYLAR TABLOSU (Bunu da projen için hazırlamıştık, silinmesin)
 class Olay(Base):
     __tablename__ = "olaylar"
 
