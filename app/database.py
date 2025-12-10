@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = "postgresql+asyncpg://safekampus_user:guclu_bir_sifre@localhost/safekampus_db"
+DATABASE_URL = "postgresql+asyncpg://safekampus_user:Kartal1903!@localhost/safekampus_db"
 
 # Async engine
 engine = create_async_engine(DATABASE_URL, echo=True)
