@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, TIMESTAMP
 from .database import Base
 from datetime import datetime
 
-# 1. KULLANICI TABLOSU (Hata veren eksik kısım buydu)
+# 1. KULLANICI TABLOSU 
 class User(Base):
     __tablename__ = "users"
 
@@ -12,7 +12,7 @@ class User(Base):
     sifre = Column(String(150), nullable=False)
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
-# 2. OLAYLAR TABLOSU (Bunu da projen için hazırlamıştık, silinmesin)
+# 2. OLAYLAR TABLOSU 
 class Olay(Base):
     __tablename__ = "olaylar"
 
