@@ -1,0 +1,28 @@
+
+
+services:
+  db:
+    image: postgres:16
+    container_name: safekampus-db
+    environment:
+      POSTGRES_USER: halbo
+      POSTGRES_PASSWORD: Kartal1903!
+      POSTGRES_DB: safekampus_db
+    ports:
+      - "2325:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: safekampus-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: halbo@example.com
+      PGADMIN_DEFAULT_PASSWORD: halil123
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
