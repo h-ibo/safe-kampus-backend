@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .routers import users, olaylar
 from app.routers import auth
+from .routers import announcements
+from .routers import notifications
+from .routers import map_locations
+from .routers import security_staff
+from .routers import chats
 
 async def init_models():
     async with engine.begin() as conn:
@@ -25,3 +30,9 @@ app.include_router(olaylar.router)
 @app.get("/")
 async def root():
     return {"message": "SafeKampus API - Şablon Hazır!"}
+
+app.include_router(announcements.router)
+app.include_router(notifications.router)
+app.include_router(map_locations.router)
+app.include_router(security_staff.router)
+app.include_router(chats.router)

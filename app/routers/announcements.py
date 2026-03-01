@@ -1,0 +1,26 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.database import get_db
+from app import models, schemas
+
+router = APIRouter(
+    prefix="/announcements",
+    tags=["Duyurular"]
+)
+
+@router.post("/")
+async def create_announcement(duyuru: schemas.AnnouncementCreate, db: AsyncSession = Depends(get_db)):
+    yeni_duyuru = models.Announcement(
+        baslik=duyuru.baslik,
+        icerik=duyuru.icerik
+    )
+    db.add(yeni_duyuru)
+    await db.commit()
+    await db.refresh(yeni_duyuru)
+    return yeni_duyuru
+
+@router.get("/")
+async def get_announcements(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(models.Announcement))
+    return result.scalars().all()

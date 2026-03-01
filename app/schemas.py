@@ -24,3 +24,33 @@ class OlayCreate(BaseModel):
     olay_turu: str
     konum: str
     aciklama: str = None
+
+# 4. Duyuru Oluşturulurken İstenen Veriler
+class AnnouncementCreate(BaseModel):
+    baslik: str
+    icerik: str
+
+# 5. Bildirim Oluşturulurken İstenen Veriler
+class NotificationCreate(BaseModel):
+    user_id: int
+    mesaj: str
+
+# 6. Harita Konumu Oluşturulurken İstenen Veriler
+class MapLocationCreate(BaseModel):
+    isim: str
+    latitude: float
+    longitude: float
+    aciklama: str = None
+
+# 7. Güvenlik Personeli Oluşturulurken İstenen Veriler
+class SecurityStaffCreate(BaseModel):
+    isim: str
+    email: EmailStr
+    sifre: str
+    telefon: str = None
+
+# 8. Sohbet Mesajı Oluşturulurken İstenen Veriler
+class ChatCreate(BaseModel):
+    sender_id: int
+    receiver_id: int
+    mesaj: str
