@@ -1,22 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routers import users
+from .routers import users, olaylar
 from app.routers import auth
 
-# Şimdilik router (users, events) eklemiyoruz, sadece altyapıyı kuruyoruz.
-
-# Veritabanı tablolarını oluşturacak fonksiyon
 async def init_models():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-# Uygulamayı başlat
 app = FastAPI(title="SafeKampus API", on_startup=[init_models])
 
-app.include_router(auth.router)
-
-# CORS Ayarları (Mobil bağlantı için şart)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,7 +17,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(olaylar.router)
 
 @app.get("/")
 async def root():

@@ -17,3 +17,10 @@ class UserResponse(BaseModel):
     class Config:
         # Bu ayar, veritabanı modelini (SQLAlchemy) Pydantic modeline dönüştürmeyi sağlar
         from_attributes = True
+
+
+
+class OlayCreate(BaseModel):
+    olay_turu: str
+    konum: str
+    aciklama: str = None
