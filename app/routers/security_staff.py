@@ -4,6 +4,7 @@ from sqlalchemy import select
 from app.database import get_db
 from app import models, schemas
 from app.utils.hashing import hash_password
+from app.utils.dependencies import get_current_user
 
 router = APIRouter(
     prefix="/security-staff",
@@ -11,7 +12,11 @@ router = APIRouter(
 )
 
 @router.post("/")
-async def create_security_staff(personel: schemas.SecurityStaffCreate, db: AsyncSession = Depends(get_db)):
+async def create_security_staff(
+    personel: schemas.SecurityStaffCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
     result = await db.execute(
         select(models.SecurityStaff).where(models.SecurityStaff.email == personel.email)
     )
@@ -31,6 +36,9 @@ async def create_security_staff(personel: schemas.SecurityStaffCreate, db: Async
     return yeni_personel
 
 @router.get("/")
-async def get_security_staff(db: AsyncSession = Depends(get_db)):
+async def get_security_staff(
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
     result = await db.execute(select(models.SecurityStaff))
     return result.scalars().all()

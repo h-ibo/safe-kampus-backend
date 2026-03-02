@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app import models, schemas
+from app.utils.dependencies import get_current_user
 
 router = APIRouter(
     prefix="/map-locations",
@@ -10,7 +11,11 @@ router = APIRouter(
 )
 
 @router.post("/")
-async def create_location(konum: schemas.MapLocationCreate, db: AsyncSession = Depends(get_db)):
+async def create_location(
+    konum: schemas.MapLocationCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
     yeni_konum = models.MapLocation(
         isim=konum.isim,
         latitude=konum.latitude,
@@ -23,12 +28,19 @@ async def create_location(konum: schemas.MapLocationCreate, db: AsyncSession = D
     return yeni_konum
 
 @router.get("/")
-async def get_locations(db: AsyncSession = Depends(get_db)):
+async def get_locations(
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
     result = await db.execute(select(models.MapLocation))
     return result.scalars().all()
 
 @router.delete("/{location_id}")
-async def delete_location(location_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_location(
+    location_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
     result = await db.execute(
         select(models.MapLocation).where(models.MapLocation.id == location_id)
     )

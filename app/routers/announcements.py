@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app import models, schemas
+from app.utils.dependencies import get_current_user
 
 router = APIRouter(
     prefix="/announcements",
@@ -10,7 +11,11 @@ router = APIRouter(
 )
 
 @router.post("/")
-async def create_announcement(duyuru: schemas.AnnouncementCreate, db: AsyncSession = Depends(get_db)):
+async def create_announcement(
+    duyuru: schemas.AnnouncementCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
     yeni_duyuru = models.Announcement(
         baslik=duyuru.baslik,
         icerik=duyuru.icerik
@@ -21,6 +26,9 @@ async def create_announcement(duyuru: schemas.AnnouncementCreate, db: AsyncSessi
     return yeni_duyuru
 
 @router.get("/")
-async def get_announcements(db: AsyncSession = Depends(get_db)):
+async def get_announcements(
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
     result = await db.execute(select(models.Announcement))
     return result.scalars().all()
