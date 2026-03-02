@@ -10,6 +10,7 @@ class User(Base):
     isim = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
     sifre = Column(String(150), nullable=False)
+    rol = Column(String(50), default="ogrenci")  # ogrenci, guvenlik, admin
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
 # 2. OLAYLAR TABLOSU

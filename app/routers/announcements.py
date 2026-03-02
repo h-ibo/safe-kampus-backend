@@ -4,6 +4,7 @@ from sqlalchemy import select
 from app.database import get_db
 from app import models, schemas
 from app.utils.dependencies import get_current_user
+from app.utils.dependencies import get_current_user, require_admin
 
 router = APIRouter(
     prefix="/announcements",
@@ -14,7 +15,7 @@ router = APIRouter(
 async def create_announcement(
     duyuru: schemas.AnnouncementCreate,
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(require_admin)
 ):
     yeni_duyuru = models.Announcement(
         baslik=duyuru.baslik,

@@ -3,8 +3,9 @@ from pydantic import BaseModel, EmailStr
 # 1. Kullanıcı Oluşturulurken İstenen Veriler (Frontend -> Backend)
 class UserCreate(BaseModel):
     isim: str
-    email: EmailStr  # Email formatında olup olmadığını kontrol eder
+    email: EmailStr
     sifre: str
+    rol: str = "ogrenci"  # varsayılan ogrenci
 
 # 2. Kullanıcı Oluşturulduktan Sonra Geri Dönen Veriler (Backend -> Frontend)
 # (Şifreyi geri döndürmüyoruz, güvenlik kuralı!)

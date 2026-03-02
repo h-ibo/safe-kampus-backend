@@ -30,10 +30,11 @@ async def create_user(
     hashed_password = hash_password(user.sifre)
 
     new_user = models.User(
-        isim=user.isim,
-        email=user.email,
-        sifre=hashed_password
-    )
+    isim=user.isim,
+    email=user.email,
+    sifre=hashed_password,
+    rol=user.rol
+)
 
     db.add(new_user)
     await db.commit()

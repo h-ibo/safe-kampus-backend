@@ -8,12 +8,16 @@ from .routers import notifications
 from .routers import map_locations
 from .routers import security_staff
 from .routers import chats
-
+from fastapi.security import HTTPBearer
 async def init_models():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-app = FastAPI(title="SafeKampus API", on_startup=[init_models])
+app = FastAPI(
+    title="SafeKampus API",
+    on_startup=[init_models],
+    swagger_ui_parameters={"persistAuthorization": True}
+)
 
 app.add_middleware(
     CORSMiddleware,
