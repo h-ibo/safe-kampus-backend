@@ -25,6 +25,9 @@ class Olay(Base):
     aciklama = Column(Text)
     durum = Column(String(50), default="beklemede")  # beklemede, inceleniyor, cozuldu
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    durum = Column(String(50), default="beklemede")
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
 # 3. GÜVENLİK PERSONELİ TABLOSU
 class SecurityStaff(Base):

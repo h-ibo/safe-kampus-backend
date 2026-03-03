@@ -19,7 +19,9 @@ async def create_olay(
     yeni_olay = models.Olay(
         olay_turu=olay.olay_turu,
         konum=olay.konum,
-        aciklama=olay.aciklama
+        aciklama=olay.aciklama,
+        latitude=olay.latitude,
+        longitude=olay.longitude
     )
     db.add(yeni_olay)
     await db.commit()

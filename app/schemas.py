@@ -25,6 +25,8 @@ class OlayCreate(BaseModel):
     olay_turu: str
     konum: str
     aciklama: str = None
+    latitude: float = None
+    longitude: float = None
 
 # 4. Duyuru Oluşturulurken İstenen Veriler
 class AnnouncementCreate(BaseModel):
