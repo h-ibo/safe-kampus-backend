@@ -57,3 +57,16 @@ async def update_password(
     current_user.sifre = hash_password(yeni_sifre)
     await db.commit()
     return {"mesaj": "Şifre başarıyla güncellendi."}
+@router.put("/profil-guncelle")
+async def update_profile(
+    isim: str = None,
+    telefon: str = None,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    if isim:
+        current_user.isim = isim
+    if telefon:
+        current_user.telefon = telefon
+    await db.commit()
+    return {"mesaj": "Profil başarıyla güncellendi."}

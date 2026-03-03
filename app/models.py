@@ -12,6 +12,8 @@ class User(Base):
     sifre = Column(String(150), nullable=False)
     rol = Column(String(50), default="ogrenci")  # ogrenci, guvenlik, admin
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    rol = Column(String(50), default="ogrenci")
+    telefon = Column(String(20), nullable=True)
 
 # 2. OLAYLAR TABLOSU
 class Olay(Base):
