@@ -21,6 +21,7 @@ class Olay(Base):
     olay_turu = Column(String(100), nullable=False)
     konum = Column(String(150), nullable=False)
     aciklama = Column(Text)
+    durum = Column(String(50), default="beklemede")  # beklemede, inceleniyor, cozuldu
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
 # 3. GÜVENLİK PERSONELİ TABLOSU

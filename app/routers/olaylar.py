@@ -47,3 +47,23 @@ async def delete_olay(
         await db.delete(olay)
         await db.commit()
     return {"mesaj": "Olay silindi"}
+@router.put("/{olay_id}/durum")
+async def update_olay_durum(
+    olay_id: int,
+    durum: str,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(require_guvenlik)
+):
+    result = await db.execute(
+        select(models.Olay).where(models.Olay.id == olay_id)
+    )
+    olay = result.scalar_one_or_none()
+    if not olay:
+        raise HTTPException(status_code=404, detail="Olay bulunamadı.")
+    
+    if durum not in ["beklemede", "inceleniyor", "cozuldu"]:
+        raise HTTPException(status_code=400, detail="Geçersiz durum.")
+    
+    olay.durum = durum
+    await db.commit()
+    return {"mesaj": f"Olay durumu '{durum}' olarak güncellendi."}
