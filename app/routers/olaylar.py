@@ -29,9 +29,20 @@ async def create_olay(
 @router.get("/")
 async def get_olaylar(
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    sayfa: int = 1,
+    limit: int = 10,
+    arama: str = None
 ):
-    result = await db.execute(select(models.Olay))
+    offset = (sayfa - 1) * limit
+    query = select(models.Olay)
+    if arama:
+        query = query.where(
+            models.Olay.olay_turu.ilike(f"%{arama}%") |
+            models.Olay.konum.ilike(f"%{arama}%") |
+            models.Olay.aciklama.ilike(f"%{arama}%")
+        )
+    result = await db.execute(query.offset(offset).limit(limit))
     return result.scalars().all()
 @router.delete("/{olay_id}")
 async def delete_olay(

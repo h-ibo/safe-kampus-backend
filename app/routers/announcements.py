@@ -29,7 +29,12 @@ async def create_announcement(
 @router.get("/")
 async def get_announcements(
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    sayfa: int = 1,
+    limit: int = 10
 ):
-    result = await db.execute(select(models.Announcement))
+    offset = (sayfa - 1) * limit
+    result = await db.execute(
+        select(models.Announcement).offset(offset).limit(limit)
+    )
     return result.scalars().all()
