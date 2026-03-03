@@ -41,3 +41,19 @@ async def create_user(
     await db.refresh(new_user)
 
     return new_user
+from app.utils.dependencies import get_current_user
+from app.utils.hashing import hash_password, verify_password
+
+@router.put("/sifre-guncelle")
+async def update_password(
+    eski_sifre: str,
+    yeni_sifre: str,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    if not verify_password(eski_sifre, current_user.sifre):
+        raise HTTPException(status_code=400, detail="Eski şifre yanlış.")
+    
+    current_user.sifre = hash_password(yeni_sifre)
+    await db.commit()
+    return {"mesaj": "Şifre başarıyla güncellendi."}
