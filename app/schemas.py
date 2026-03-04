@@ -13,10 +13,9 @@ class UserResponse(BaseModel):
     id: int
     isim: str
     email: EmailStr
-    # created_at: datetime  # İstersen bunu da ekleyebilirsin ama şimdilik gerek yok
+    rol: str
 
     class Config:
-        # Bu ayar, veritabanı modelini (SQLAlchemy) Pydantic modeline dönüştürmeyi sağlar
         from_attributes = True
 
 

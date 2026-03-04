@@ -70,3 +70,12 @@ async def update_profile(
         current_user.telefon = telefon
     await db.commit()
     return {"mesaj": "Profil başarıyla güncellendi."}
+from app.utils.dependencies import require_admin
+
+@router.get("/", response_model=list[schemas.UserResponse])
+async def get_users(
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(require_admin)
+):
+    result = await db.execute(select(models.User))
+    return result.scalars().all()
