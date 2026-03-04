@@ -57,3 +57,7 @@ class ChatCreate(BaseModel):
     sender_id: int
     receiver_id: int
     mesaj: str
+# Login için ayrı schema
+class UserLogin(BaseModel):
+    email: EmailStr
+    sifre: str

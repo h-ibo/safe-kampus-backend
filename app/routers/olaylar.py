@@ -1,14 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app import models, schemas
 from app.utils.dependencies import get_current_user, require_guvenlik
 
-router = APIRouter(
-    prefix="/olaylar",
-    tags=["Olaylar"]
-)
+router = APIRouter(prefix="/olaylar", tags=["Olaylar"])
 
 @router.post("/")
 async def create_olay(
@@ -17,6 +14,7 @@ async def create_olay(
     current_user = Depends(get_current_user)
 ):
     yeni_olay = models.Olay(
+        user_id=current_user.id,
         olay_turu=olay.olay_turu,
         konum=olay.konum,
         aciklama=olay.aciklama,
@@ -32,34 +30,29 @@ async def create_olay(
 async def get_olaylar(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user),
-    sayfa: int = 1,
-    limit: int = 10,
-    arama: str = None
 ):
-    offset = (sayfa - 1) * limit
-    query = select(models.Olay)
-    if arama:
-        query = query.where(
-            models.Olay.olay_turu.ilike(f"%{arama}%") |
-            models.Olay.konum.ilike(f"%{arama}%") |
-            models.Olay.aciklama.ilike(f"%{arama}%")
-        )
-    result = await db.execute(query.offset(offset).limit(limit))
+    # Admin ve güvenlik tüm olayları görür, kullanıcı sadece kendinkini
+    if current_user.rol in ["admin", "guvenlik"]:
+        query = select(models.Olay)
+    else:
+        query = select(models.Olay).where(models.Olay.user_id == current_user.id)
+    
+    result = await db.execute(query.order_by(models.Olay.created_at.desc()))
     return result.scalars().all()
+
 @router.delete("/{olay_id}")
 async def delete_olay(
     olay_id: int,
     db: AsyncSession = Depends(get_db),
     current_user = Depends(require_guvenlik)
 ):
-    result = await db.execute(
-        select(models.Olay).where(models.Olay.id == olay_id)
-    )
+    result = await db.execute(select(models.Olay).where(models.Olay.id == olay_id))
     olay = result.scalar_one_or_none()
     if olay:
         await db.delete(olay)
         await db.commit()
     return {"mesaj": "Olay silindi"}
+
 @router.put("/{olay_id}/durum")
 async def update_olay_durum(
     olay_id: int,
@@ -67,16 +60,12 @@ async def update_olay_durum(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(require_guvenlik)
 ):
-    result = await db.execute(
-        select(models.Olay).where(models.Olay.id == olay_id)
-    )
+    result = await db.execute(select(models.Olay).where(models.Olay.id == olay_id))
     olay = result.scalar_one_or_none()
     if not olay:
         raise HTTPException(status_code=404, detail="Olay bulunamadı.")
-    
     if durum not in ["beklemede", "inceleniyor", "cozuldu"]:
         raise HTTPException(status_code=400, detail="Geçersiz durum.")
-    
     olay.durum = durum
     await db.commit()
     return {"mesaj": f"Olay durumu '{durum}' olarak güncellendi."}

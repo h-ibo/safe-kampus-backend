@@ -18,14 +18,13 @@ class User(Base):
 # 2. OLAYLAR TABLOSU
 class Olay(Base):
     __tablename__ = "olaylar"
-
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # BU SATIRI EKLE
     olay_turu = Column(String(100), nullable=False)
     konum = Column(String(150), nullable=False)
     aciklama = Column(Text)
-    durum = Column(String(50), default="beklemede")  # beklemede, inceleniyor, cozuldu
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
     durum = Column(String(50), default="beklemede")
+    created_at = Column(TIMESTAMP, default=datetime.utcnow)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
 
