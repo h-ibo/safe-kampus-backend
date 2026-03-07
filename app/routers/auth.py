@@ -12,34 +12,37 @@ import secrets
 import aiosmtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from datetime import datetime, timedelta
 
 load_dotenv()
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-reset_tokens: dict = {}
-
+# ---- MAIL SENDING FUNCTION ----
 async def send_email(to: str, subject: str, html: str):
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = os.getenv("MAIL_FROM")
-    msg["To"] = to
-    msg.attach(MIMEText(html, "html"))
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = os.getenv("MAIL_FROM")
+        msg["To"] = to
+        msg.attach(MIMEText(html, "html"))
+        await aiosmtplib.send(
+            msg,
+            hostname="smtp.gmail.com",
+            port=587,
+            username=os.getenv("MAIL_USERNAME"),
+            password=os.getenv("MAIL_PASSWORD"),
+            start_tls=True,
+        )
+        print(f"✅ Email gönderildi: {to}")
+    except Exception as e:
+        print(f"❌ Email hatası: {e}")
+        raise e
 
-    await aiosmtplib.send(
-        msg,
-        hostname="smtp.gmail.com",
-        port=587,
-        username=os.getenv("MAIL_USERNAME"),
-        password=os.getenv("MAIL_PASSWORD"),
-        start_tls=True,
-    )
-
+# ---- LOGIN ----
 @router.post("/login")
 async def login(user: schemas.UserLogin, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(models.User).where(models.User.email == user.email)
-    )
+    result = await db.execute(select(models.User).where(models.User.email == user.email))
     existing_user = result.scalar_one_or_none()
     if not existing_user:
         raise HTTPException(status_code=400, detail="Email kayıtlı değil.")
@@ -53,18 +56,20 @@ async def login(user: schemas.UserLogin, db: AsyncSession = Depends(get_db)):
         "rol": existing_user.rol
     }
 
+# ---- RESET PASSWORD REQUEST ----
 @router.post("/sifre-sifirla-talep")
 async def sifre_sifirla_talep(email: EmailStr, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(models.User).where(models.User.email == email)
-    )
+    result = await db.execute(select(models.User).where(models.User.email == email))
     user = result.scalar_one_or_none()
 
     if user:
+        # 1 saat geçerli token oluştur
         token = secrets.token_urlsafe(32)
-        reset_tokens[token] = user.id
-        reset_link = f"http://10.53.169.133:8081/sifre-sifirla?token={token}"
+        user.reset_token = token
+        user.reset_token_expire = datetime.utcnow() + timedelta(hours=1)
+        await db.commit()
 
+        reset_link = f"http://10.53.169.133:8081/sifre-sifirla?token={token}"
         html = f"""
         <h2>Şifre Sıfırlama</h2>
         <p>Merhaba {user.isim},</p>
@@ -80,16 +85,23 @@ async def sifre_sifirla_talep(email: EmailStr, db: AsyncSession = Depends(get_db
 
     return {"mesaj": "Eğer bu email kayıtlıysa sıfırlama linki gönderildi."}
 
+# ---- RESET PASSWORD ----
 @router.post("/sifre-sifirla")
 async def sifre_sifirla(token: str, yeni_sifre: str, db: AsyncSession = Depends(get_db)):
-    user_id = reset_tokens.get(token)
-    if not user_id:
-        raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş token.")
-    result = await db.execute(select(models.User).where(models.User.id == user_id))
+    result = await db.execute(
+        select(models.User).where(
+            models.User.reset_token == token,
+            models.User.reset_token_expire > datetime.utcnow()
+        )
+    )
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı.")
+        raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş token.")
+
+    # Şifreyi güncelle ve reset alanlarını temizle
     user.sifre = hash_password(yeni_sifre)
+    user.reset_token = None
+    user.reset_token_expire = None
     await db.commit()
-    del reset_tokens[token]
+
     return {"mesaj": "Şifre başarıyla güncellendi."}
