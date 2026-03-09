@@ -42,13 +42,19 @@ async def send_email(to: str, subject: str, html: str):
 # ---- LOGIN ----
 @router.post("/login")
 async def login(user: schemas.UserLogin, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(models.User).where(models.User.email == user.email))
+    result = await db.execute(
+        select(models.User).where(models.User.email == user.email)
+    )
     existing_user = result.scalar_one_or_none()
+
     if not existing_user:
         raise HTTPException(status_code=400, detail="Email kayıtlı değil.")
+
     if not verify_password(user.sifre, existing_user.sifre):
         raise HTTPException(status_code=400, detail="Şifre yanlış.")
+
     token = create_access_token({"user_id": existing_user.id})
+
     return {
         "access_token": token,
         "token_type": "bearer",
