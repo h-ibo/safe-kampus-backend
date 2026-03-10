@@ -29,10 +29,10 @@ async def send_email(to: str, subject: str, html: str):
         await aiosmtplib.send(
             msg,
             hostname="smtp.gmail.com",
-            port=587,
+            port=465,
             username=os.getenv("MAIL_USERNAME"),
             password=os.getenv("MAIL_PASSWORD"),
-            start_tls=True,
+            use_tls=True,
         )
         print(f"✅ Email gönderildi: {to}")
     except Exception as e:
