@@ -75,7 +75,7 @@ async def sifre_sifirla_talep(email: EmailStr, db: AsyncSession = Depends(get_db
         user.reset_token_expire = datetime.utcnow() + timedelta(hours=1)
         await db.commit()
 
-        reset_link = f"http://10.53.169.133:8081/sifre-sifirla?token={token}"
+        reset_link = f"http://localhost:8081/sifre-sifirla?token={token}"
         html = f"""
         <h2>Şifre Sıfırlama</h2>
         <p>Merhaba {user.isim},</p>
