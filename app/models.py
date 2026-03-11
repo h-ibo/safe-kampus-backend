@@ -11,6 +11,7 @@ class User(Base):
     sifre = Column(String(150), nullable=False)
     rol = Column(String(50), default="ogrenci")
     telefon = Column(String(20), nullable=True)
+    push_token = Column(String(500), nullable=True)
     reset_token = Column(String(200), nullable=True)
     reset_token_expire = Column(TIMESTAMP, nullable=True)
     created_at = Column(TIMESTAMP, default=datetime.utcnow)

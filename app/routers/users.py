@@ -79,3 +79,13 @@ async def get_users(
 ):
     result = await db.execute(select(models.User))
     return result.scalars().all()
+
+@router.put("/push-token")
+async def push_token_guncelle(
+    data: dict,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    current_user.push_token = data.get("push_token")
+    await db.commit()
+    return {"mesaj": "Push token güncellendi."}

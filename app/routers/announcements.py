@@ -3,13 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app import models, schemas
-from app.utils.dependencies import get_current_user
 from app.utils.dependencies import get_current_user, require_admin
+from app.utils.push import send_push_to_all
 
-router = APIRouter(
-    prefix="/announcements",
-    tags=["Duyurular"]
-)
+router = APIRouter(prefix="/announcements", tags=["Duyurular"])
 
 @router.post("/")
 async def create_announcement(
@@ -24,6 +21,10 @@ async def create_announcement(
     db.add(yeni_duyuru)
     await db.commit()
     await db.refresh(yeni_duyuru)
+
+    # Herkese bildirim gönder
+    await send_push_to_all(db, f"📢 {duyuru.baslik}", duyuru.icerik, {"duyuru_id": yeni_duyuru.id})
+
     return yeni_duyuru
 
 @router.get("/")
