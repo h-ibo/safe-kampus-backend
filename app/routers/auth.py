@@ -58,6 +58,7 @@ async def login(user: schemas.UserLogin, db: AsyncSession = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer",
+        "id": existing_user.id,
         "isim": existing_user.isim,
         "rol": existing_user.rol
     }
