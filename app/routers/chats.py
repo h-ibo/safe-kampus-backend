@@ -153,3 +153,22 @@ async def okunmamis_mesaj_sayisi(
     )
     sayi = result.scalar()
     return {"sayi": sayi or 0}
+
+@router.patch("/{user2_id}/okundu")
+async def mesajlari_okundu_yap(
+    user2_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(models.Chat).where(
+            models.Chat.sender_id == user2_id,
+            models.Chat.receiver_id == current_user.id,
+            models.Chat.okundu == False
+        )
+    )
+    mesajlar = result.scalars().all()
+    for m in mesajlar:
+        m.okundu = True
+    await db.commit()
+    return {"guncellenen": len(mesajlar)}
