@@ -138,3 +138,18 @@ async def get_konusmalar(
         })
     
     return kisiler
+
+@router.get("/okunmamis-sayisi")
+async def okunmamis_mesaj_sayisi(
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    from sqlalchemy import func
+    result = await db.execute(
+        select(func.count(models.Chat.id)).where(
+            models.Chat.receiver_id == current_user.id,
+            models.Chat.okundu == False
+        )
+    )
+    sayi = result.scalar()
+    return {"sayi": sayi or 0}

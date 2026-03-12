@@ -65,6 +65,7 @@ class Chat(Base):
     receiver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     mesaj = Column(Text, nullable=True)
     image_url = Column(Text, nullable=True)
+    okundu = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
 # 7. HARİTA KONUMLARI TABLOSU
