@@ -92,7 +92,7 @@ async def resim_yukle(
     # Railway'de dosya sistemi kalıcı değil, base64 olarak döndür
     return {"image_url": f"data:image/jpeg;base64,{data.get('image').split(',')[-1]}"}
 
-@router.get("/konusmalarim")
+@router.get("/meta/konusmalarim")
 async def get_konusmalar(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
@@ -139,7 +139,7 @@ async def get_konusmalar(
     
     return kisiler
 
-@router.get("/okunmamis-sayisi")
+@router.get("/meta/okunmamis-sayisi")
 async def okunmamis_mesaj_sayisi(
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
