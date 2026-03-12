@@ -91,3 +91,50 @@ async def resim_yukle(
     
     # Railway'de dosya sistemi kalıcı değil, base64 olarak döndür
     return {"image_url": f"data:image/jpeg;base64,{data.get('image').split(',')[-1]}"}
+
+@router.get("/konusmalarim")
+async def get_konusmalar(
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Kullanıcının mesajlaştığı kişileri döndür"""
+    from sqlalchemy import or_
+    result = await db.execute(
+        select(models.Chat).where(
+            or_(
+                models.Chat.sender_id == current_user.id,
+                models.Chat.receiver_id == current_user.id
+            )
+        ).order_by(models.Chat.created_at.desc())
+    )
+    mesajlar = result.scalars().all()
+    
+    # Benzersiz kişileri bul
+    kisi_ids = set()
+    for m in mesajlar:
+        if m.sender_id != current_user.id:
+            kisi_ids.add(m.sender_id)
+        if m.receiver_id != current_user.id:
+            kisi_ids.add(m.receiver_id)
+    
+    if not kisi_ids:
+        return []
+    
+    result2 = await db.execute(
+        select(models.User).where(models.User.id.in_(kisi_ids))
+    )
+    users = result2.scalars().all()
+    
+    # Son mesajı da ekle
+    kisiler = []
+    for u in users:
+        son_mesaj = next((m for m in mesajlar if m.sender_id == u.id or m.receiver_id == u.id), None)
+        kisiler.append({
+            "id": u.id,
+            "isim": u.isim,
+            "rol": u.rol,
+            "son_mesaj": son_mesaj.mesaj if son_mesaj else "",
+            "son_tarih": str(son_mesaj.created_at) if son_mesaj else ""
+        })
+    
+    return kisiler
