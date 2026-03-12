@@ -52,7 +52,8 @@ class Notification(Base):
     __tablename__ = "notifications"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    mesaj = Column(Text, nullable=False)
+    mesaj = Column(Text, nullable=True)
+    image_url = Column(Text, nullable=True)
     okundu = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
@@ -62,7 +63,8 @@ class Chat(Base):
     id = Column(Integer, primary_key=True, index=True)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     receiver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    mesaj = Column(Text, nullable=False)
+    mesaj = Column(Text, nullable=True)
+    image_url = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
 # 7. HARİTA KONUMLARI TABLOSU

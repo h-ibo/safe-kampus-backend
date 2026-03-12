@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 # 1. Kullanıcı Oluşturulurken İstenen Veriler (Frontend -> Backend)
 class UserCreate(BaseModel):
@@ -53,9 +54,9 @@ class SecurityStaffCreate(BaseModel):
 
 # 8. Sohbet Mesajı Oluşturulurken İstenen Veriler
 class ChatCreate(BaseModel):
-    sender_id: int
     receiver_id: int
-    mesaj: str
+    mesaj: Optional[str] = None
+    image_url: Optional[str] = None
 # Login için ayrı schema
 class UserLogin(BaseModel):
     email: EmailStr
