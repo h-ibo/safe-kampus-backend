@@ -51,3 +51,32 @@ async def mark_as_read(
         await db.commit()
         await db.refresh(bildirim)
     return bildirim
+@router.get("/meta/okunmamis-sayisi")
+async def okunmamis_bildirim_sayisi(
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    from sqlalchemy import func
+    result = await db.execute(
+        select(func.count(models.Notification.id)).where(
+            models.Notification.user_id == current_user.id,
+            models.Notification.okundu == False
+        )
+    )
+    sayi = result.scalar()
+    return {"sayi": sayi or 0}
+
+@router.get("/meta/okunmamis-sayisi")
+async def okunmamis_bildirim_sayisi(
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    from sqlalchemy import func
+    result = await db.execute(
+        select(func.count(models.Notification.id)).where(
+            models.Notification.user_id == current_user.id,
+            models.Notification.okundu == False
+        )
+    )
+    sayi = result.scalar()
+    return {"sayi": sayi or 0}
