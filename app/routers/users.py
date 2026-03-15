@@ -33,7 +33,11 @@ async def create_user(
     isim=user.isim,
     email=user.email,
     sifre=hashed_password,
-    rol=user.rol
+    rol=user.rol,
+    telefon=user.telefon,
+    ogrenci_no=user.ogrenci_no,
+    bolum=user.bolum,
+    fakulte=user.fakulte
 )
 
     db.add(new_user)

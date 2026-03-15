@@ -6,7 +6,11 @@ class UserCreate(BaseModel):
     isim: str
     email: EmailStr
     sifre: str
-    rol: str = "ogrenci"  # varsayılan ogrenci
+    rol: str = "ogrenci"
+    telefon: str = None
+    ogrenci_no: str = None
+    bolum: str = None
+    fakulte: str = None
 
 # 2. Kullanıcı Oluşturulduktan Sonra Geri Dönen Veriler (Backend -> Frontend)
 # (Şifreyi geri döndürmüyoruz, güvenlik kuralı!)
@@ -15,7 +19,10 @@ class UserResponse(BaseModel):
     isim: str
     email: EmailStr
     rol: str
-
+    telefon: str = None
+    ogrenci_no: str = None
+    bolum: str = None
+    fakulte: str = None
     class Config:
         from_attributes = True
 
