@@ -93,3 +93,9 @@ async def push_token_guncelle(
     current_user.push_token = data.get("push_token")
     await db.commit()
     return {"mesaj": "Push token güncellendi."}
+
+@router.get("/me", response_model=schemas.UserResponse)
+async def get_me(
+    current_user = Depends(get_current_user)
+):
+    return current_user
