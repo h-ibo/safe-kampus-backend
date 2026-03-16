@@ -87,3 +87,15 @@ async def update_olay_durum(
     )
 
     return {"mesaj": f"Olay durumu '{durum}' olarak güncellendi."}
+
+@router.get("/{olay_id}")
+async def get_olay(
+    olay_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    result = await db.execute(select(models.Olay).where(models.Olay.id == olay_id))
+    olay = result.scalar_one_or_none()
+    if not olay:
+        raise HTTPException(status_code=404, detail="Olay bulunamadı.")
+    return olay
