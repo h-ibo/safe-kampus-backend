@@ -19,10 +19,10 @@ class UserResponse(BaseModel):
     isim: str
     email: EmailStr
     rol: str
-    telefon: str = None
-    ogrenci_no: str = None
-    bolum: str = None
-    fakulte: str = None
+    telefon: Optional[str] = None
+    ogrenci_no: Optional[str] = None
+    bolum: Optional[str] = None
+    fakulte: Optional[str] = None
     class Config:
         from_attributes = True
 
