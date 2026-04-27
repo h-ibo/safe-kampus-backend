@@ -1,10 +1,33 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, and_
+from typing import Dict
 from app.database import get_db
 from app import models, schemas
 from app.utils.dependencies import get_current_user
 from app.utils.push import send_push_to_users
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[int, WebSocket] = {}
+
+    async def connect(self, websocket: WebSocket, user_id: int):
+        await websocket.accept()
+        self.active_connections[user_id] = websocket
+
+    def disconnect(self, user_id: int):
+        if user_id in self.active_connections:
+            del self.active_connections[user_id]
+
+    async def send_personal_message(self, message: dict, user_id: int):
+        if user_id in self.active_connections:
+            websocket = self.active_connections[user_id]
+            try:
+                await websocket.send_json(message)
+            except Exception:
+                self.disconnect(user_id)
+
+manager = ConnectionManager()
 
 router = APIRouter(prefix="/chats", tags=["Sohbet"])
 
@@ -32,7 +55,31 @@ async def send_message(
         {"chat": True}
     )
 
+    # WebSocket üzerinden alıcıya anında ilet
+    await manager.send_personal_message(
+        {
+            "id": yeni_mesaj.id,
+            "sender_id": yeni_mesaj.sender_id,
+            "receiver_id": yeni_mesaj.receiver_id,
+            "mesaj": yeni_mesaj.mesaj,
+            "image_url": yeni_mesaj.image_url,
+            "created_at": str(yeni_mesaj.created_at) if hasattr(yeni_mesaj, 'created_at') and yeni_mesaj.created_at else None,
+            "okundu": yeni_mesaj.okundu
+        },
+        mesaj.receiver_id
+    )
+
     return yeni_mesaj
+
+@router.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: int):
+    await manager.connect(websocket, user_id)
+    try:
+        while True:
+            # Sadece bağlantıyı açık tutmak ve olası pingleri almak için
+            data = await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(user_id)
 
 @router.get("/guvenlik-listesi")
 async def get_guvenlik_listesi(
