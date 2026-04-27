@@ -8,6 +8,7 @@ from .routers import notifications
 from .routers import map_locations
 from .routers import security_staff
 from .routers import chats
+from .routers import ai_chat
 from fastapi.security import HTTPBearer
 async def init_models():
     async with engine.begin() as conn:
@@ -40,3 +41,4 @@ app.include_router(notifications.router)
 app.include_router(map_locations.router)
 app.include_router(security_staff.router)
 app.include_router(chats.router)
+app.include_router(ai_chat.router)
