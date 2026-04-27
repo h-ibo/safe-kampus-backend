@@ -29,7 +29,7 @@ Arama sonuçları ({request.soru}):
 
 Öğrencinin sorusu: {request.soru}
 
-Türkçe, kısa ve net cevap ver. Eğer bilgi bulamazsan 'Bu konuda bilgim bulunmuyor, harran.edu.tr adresini ziyaret edebilirsiniz' de."""
+Türkçe, kısa ve net cevap ver."""
 
         api_key = os.getenv("GEMINI_API_KEY")
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
@@ -40,6 +40,10 @@ Türkçe, kısa ve net cevap ver. Eğer bilgi bulamazsan 'Bu konuda bilgim bulun
         
         response = req.post(url, json=payload, timeout=30)
         data = response.json()
+        
+        if "candidates" not in data:
+            return {"cevap": f"API Hatası: {data}"}
+        
         cevap = data["candidates"][0]["content"]["parts"][0]["text"]
         return {"cevap": cevap}
     except Exception as e:
