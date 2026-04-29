@@ -1,50 +1,59 @@
-import os
-import requests as req
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from app.utils.dependencies import get_current_user
-from app.utils.scraper import harran_scrape, harran_ara, harran_genel_bilgi
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+from app.utils.faiss_store import search # Senin yazdığın arama fonksiyonu
 
-router = APIRouter(prefix="/ai-chat", tags=["AI Chat"])
+load_dotenv()
 
-class SoruRequest(BaseModel):
+router = APIRouter()
+
+# Gemini Ayarları
+GENAI_API_KEY = os.getenv("GENAI_API_KEY")
+if not GENAI_API_KEY:
+    raise ValueError("GENAI_API_KEY bulunamadı!")
+
+genai.configure(api_key=GENAI_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+class ChatRequest(BaseModel):
     soru: str
 
-@router.post("/")
-async def ai_sohbet(
-    request: SoruRequest,
-    current_user=Depends(get_current_user)
-):
+@router.post("/ai-chat/")
+async def chat(request: ChatRequest):
     try:
-        arama = harran_ara(request.soru)
+        # 1. ADIM: FAISS hafızasından alakalı bilgileri getir
+        # k=5 yaparak en alakalı 5 parçayı alıyoruz
+        context_docs = search(request.soru, k=5)
+        context_text = "\n\n".join(context_docs)
+
+        # 2. ADIM: Gemini için sistem komutunu (Prompt) oluştur
+        # Eğer hafızada bilgi yoksa genel bilgisini kullanmasını söylüyoruz
+        prompt = f"""
+        Sen Harran Üniversitesi için geliştirilmiş 'SafeKampüs' asistanısın. 
+        Görevin, aşağıda sana sağlanan bilgiler (BAĞLAM) doğrultusunda öğrencinin sorusunu cevaplamaktır.
         
-        prompt = f"""Sen Harran Üniversitesi AI asistanısın. Harran Üniversitesi hakkında sorulara cevap veriyorsun.
-
-Harran Üniversitesi web sitesinden çekilen bilgiler:
-{arama}
-
-Öğrencinin sorusu: {request.soru}
-
-Kurallar:
-- Sadece Türkçe cevap ver
-- Kısa ve net ol
-- Eğer siteden bilgi bulunamadıysa 'Bu bilgiye şu an ulaşamıyorum, harran.edu.tr adresini ziyaret edebilir veya üniversiteyi arayabilirsiniz' de
-- Uydurma bilgi verme"""
-
-        api_key = os.getenv("GEMINI_API_KEY")
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        KURALLAR:
+        1. Sadece sağlanan bağlama sadık kalarak cevap ver.
+        2. Eğer bağlamda cevap yoksa, "Bu konuda üniversite veritabanında net bir bilgi bulamadım, ancak genel olarak..." diyerek devam edebilirsin.
+        3. Nazik, yardımsever ve bir üniversite asistanı gibi profesyonel konuş.
         
-        payload = {
-            "contents": [{"parts": [{"text": prompt}]}]
+        BAĞLAM (Harran Üniversitesi Verileri):
+        {context_text if context_text else "Üniversite veritabanında bu soruyla ilgili spesifik bir döküman bulunamadı."}
+        
+        KULLANICI SORUSU:
+        {request.soru}
+        """
+
+        # 3. ADIM: Gemini'den cevabı al
+        response = model.generate_content(prompt)
+        
+        return {
+            "cevap": response.text,
+            "kaynaklar": len(context_docs) # Kaç parça bilgiden faydalandığını görmek için
         }
-        
-        response = req.post(url, json=payload, timeout=30)
-        data = response.json()
-        
-        if "candidates" not in data:
-            return {"cevap": f"API Hatası: {data}"}
-        
-        cevap = data["candidates"][0]["content"]["parts"][0]["text"]
-        return {"cevap": cevap}
+
     except Exception as e:
-        return {"cevap": f"Bir hata oluştu: {str(e)}"}
+        print(f"Chat Hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Bir hata oluştu: {str(e)}")
