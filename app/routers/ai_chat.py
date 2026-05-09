@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
-from app.utils.faiss_store import search # Senin yazdığın arama fonksiyonu
+from app.utils.faiss_store import search 
 
 load_dotenv()
 
@@ -15,7 +15,22 @@ if not GENAI_API_KEY:
     raise ValueError("GENAI_API_KEY bulunamadı!")
 
 genai.configure(api_key=GENAI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+
+# --- MODEL LİSTELEME VE SEÇME ---
+try:
+    print("🚀 Render üzerinde kullanılabilir modeller taranıyor...")
+    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+    for model_name in available_models:
+        print(f"✅ Kullanılabilir Model: {model_name}")
+    
+    # Eğer gemini-1.5-flash listede varsa onu seç, yoksa listedeki ilk modeli al
+    selected_model_name = 'models/gemini-1.5-flash' if 'models/gemini-1.5-flash' in available_models else available_models[0]
+    print(f"🎯 Seçilen Model: {selected_model_name}")
+    model = genai.GenerativeModel(selected_model_name)
+except Exception as e:
+    print(f"❌ Model listeleme hatası: {e}")
+    # Yedek plan
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
 class ChatRequest(BaseModel):
     soru: str
@@ -23,13 +38,9 @@ class ChatRequest(BaseModel):
 @router.post("/ai-chat/")
 async def chat(request: ChatRequest):
     try:
-        # 1. ADIM: FAISS hafızasından alakalı bilgileri getir
-        # k=5 yaparak en alakalı 5 parçayı alıyoruz
         context_docs = search(request.soru, k=5)
         context_text = "\n\n".join(context_docs)
 
-        # 2. ADIM: Gemini için sistem komutunu (Prompt) oluştur
-        # Eğer hafızada bilgi yoksa genel bilgisini kullanmasını söylüyoruz
         prompt = f"""
         Sen Harran Üniversitesi için geliştirilmiş 'SafeKampüs' asistanısın. 
         Görevin, aşağıda sana sağlanan bilgiler (BAĞLAM) doğrultusunda öğrencinin sorusunu cevaplamaktır.
@@ -46,12 +57,11 @@ async def chat(request: ChatRequest):
         {request.soru}
         """
 
-        # 3. ADIM: Gemini'den cevabı al
         response = model.generate_content(prompt)
         
         return {
             "cevap": response.text,
-            "kaynaklar": len(context_docs) # Kaç parça bilgiden faydalandığını görmek için
+            "kaynaklar": len(context_docs)
         }
 
     except Exception as e:
