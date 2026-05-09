@@ -4,7 +4,7 @@ from sqlalchemy import select
 from app.database import get_db
 from app import models, schemas
 from app.utils.hashing import verify_password, hash_password
-from app.utils.token import create_access_token
+from app.utils.auth_token import create_access_token
 from pydantic import EmailStr
 import os
 from dotenv import load_dotenv
