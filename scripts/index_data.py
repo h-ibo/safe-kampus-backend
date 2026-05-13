@@ -43,7 +43,7 @@ def harran_tum_siteyi_tara():
     # Tarama konfigürasyonu
     payload = {
         "url": "https://www.harran.edu.tr",
-        "limit": 50, # Başlangıç için 100 sayfa (İstersen artırabilirsin)
+        "limit": 50, # Başlangıç için 50 sayfa (İstersen artırabilirsin)
         "scrapeOptions": {
             "formats": ["markdown"]
         }

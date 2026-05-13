@@ -5,6 +5,7 @@ from sqlalchemy import select
 from app.database import get_db
 from app import models, schemas
 from app.utils.hashing import hash_password   # Hashing eklendi
+from app.utils.dependencies import require_admin
 
 router = APIRouter(
     prefix="/users",
@@ -99,3 +100,30 @@ async def get_me(
     current_user = Depends(get_current_user)
 ):
     return current_user
+
+@router.post("/create-security", response_model=schemas.UserResponse)
+async def create_security_user(
+    user: schemas.UserCreate, 
+    db: AsyncSession = Depends(get_db),
+    current_admin = Depends(require_admin) # Sadece admin erişebilir
+):
+    # Email kontrolü
+    result = await db.execute(
+        select(models.User).where(models.User.email == user.email)
+    )
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Bu email zaten kayıtlı.")
+
+    # Şifreyi hashle ve rolü "guvenlik" olarak ata
+    new_security = models.User(
+        isim=user.isim,
+        email=user.email,
+        sifre=hash_password(user.sifre),
+        rol="guvenlik", # Burada rolü manuel olarak güvenlik yapıyoruz
+        telefon=user.telefon
+    )
+
+    db.add(new_security)
+    await db.commit()
+    await db.refresh(new_security)
+    return new_security
