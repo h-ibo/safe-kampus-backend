@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Float, ForeignKey, Boolean, func
 from .database import Base
 from datetime import datetime
 
@@ -15,9 +15,9 @@ class User(Base):
     ogrenci_no = Column(String(50), nullable=True)
     bolum = Column(String(100), nullable=True)
     fakulte = Column(String(100), nullable=True)    
-    reset_token = Column(String(200), nullable=True)
-    reset_token_expire = Column(TIMESTAMP, nullable=True)
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    reset_token = Column(String(200), nullable=True) # Buraya 6 haneli kodu kaydedeceğiz
+    reset_token_expire = Column(TIMESTAMP, nullable=True) # Kodun son kullanma tarihi
+    created_at = Column(TIMESTAMP, server_default=func.now()) # Sunucu saatini otomatik alır
 
 # 2. OLAYLAR TABLOSU
 class Olay(Base):
@@ -30,7 +30,7 @@ class Olay(Base):
     durum = Column(String(50), default="beklemede")
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 # 3. GÜVENLİK PERSONELİ TABLOSU
 class SecurityStaff(Base):
@@ -40,7 +40,7 @@ class SecurityStaff(Base):
     email = Column(String(150), unique=True, nullable=False)
     sifre = Column(String(150), nullable=False)
     telefon = Column(String(20))
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 # 4. DUYURULAR TABLOSU
 class Announcement(Base):
@@ -48,7 +48,7 @@ class Announcement(Base):
     id = Column(Integer, primary_key=True, index=True)
     baslik = Column(String(150), nullable=False)
     icerik = Column(Text, nullable=False)
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 # 5. BİLDİRİMLER TABLOSU
 class Notification(Base):
@@ -58,7 +58,7 @@ class Notification(Base):
     mesaj = Column(Text, nullable=True)
     image_url = Column(Text, nullable=True)
     okundu = Column(Boolean, default=False)
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 # 6. SOHBET TABLOSU
 class Chat(Base):
@@ -69,7 +69,7 @@ class Chat(Base):
     mesaj = Column(Text, nullable=True)
     image_url = Column(Text, nullable=True)
     okundu = Column(Boolean, default=False)
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 # 7. HARİTA KONUMLARI TABLOSU
 class MapLocation(Base):
