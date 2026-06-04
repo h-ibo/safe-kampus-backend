@@ -7,18 +7,15 @@ from app.utils.hashing import verify_password, hash_password
 from app.utils.auth_token import create_access_token
 from pydantic import BaseModel, EmailStr
 import os
+import httpx
 from dotenv import load_dotenv
-import random  # 6 haneli kod üretmek için secrets yerine random kullanıyoruz
-import aiosmtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import random
 from datetime import datetime, timedelta
 
 load_dotenv()
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-# Frontend'den gelecek doğrulama verisi için Pydantic modeli
 class SifreSifirlaSchema(BaseModel):
     email: EmailStr
     kod: str
@@ -27,22 +24,25 @@ class SifreSifirlaSchema(BaseModel):
 # ---- MAIL SENDING FUNCTION ----
 async def send_email(to: str, subject: str, html: str):
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = f"{os.getenv('MAIL_FROM_NAME')} <{os.getenv('MAIL_FROM')}>"
-        msg["To"] = to
-        msg.attach(MIMEText(html, "html"))
-        
-        # Burayı .env dosyasından dinamik okuyacak şekilde güncelledik!
-        await aiosmtplib.send(
-    msg,
-    hostname=os.getenv("MAIL_SERVER"),
-    port=465,
-    username=os.getenv("MAIL_USERNAME"),
-    password=os.getenv("MAIL_PASSWORD"),
-    use_tls=True,
-    start_tls=False
-)
+        api_key = os.getenv("BREVO_API_KEY")
+        payload = {
+            "sender": {"name": os.getenv("MAIL_FROM_NAME"), "email": os.getenv("MAIL_FROM")},
+            "to": [{"email": to}],
+            "subject": subject,
+            "htmlContent": html
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.brevo.com/v3/smtp/email",
+                json=payload,
+                headers={
+                    "api-key": api_key,
+                    "Content-Type": "application/json"
+                }
+            )
+        if response.status_code not in [200, 201]:
+            print(f"❌ Brevo API hatası: {response.text}")
+            raise Exception(f"Brevo API hatası: {response.status_code}")
         print(f"✅ Email başarıyla gönderildi: {to}")
     except Exception as e:
         print(f"❌ Email gönderim hatası: {e}")
@@ -72,19 +72,15 @@ async def login(user: schemas.UserLogin, db: AsyncSession = Depends(get_db)):
         "rol": existing_user.rol
     }
 
-# ---- RESET PASSWORD REQUEST (6 HANELİ KOD ÜRETİR) ----
+# ---- RESET PASSWORD REQUEST ----
 @router.post("/sifre-sifirla-talep")
 async def sifre_sifirla_talep(email: EmailStr, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(models.User).where(models.User.email == email))
     user = result.scalar_one_or_none()
 
-    # Güvenlik nedeniyle kullanıcı olmasa bile "gönderildi" mesajı döneceğiz, 
-    # ama kullanıcı varsa kod üreteceğiz.
     if user:
-        # 6 haneli rastgele bir sayı üretiyoruz (Örn: 482019)
         kod = str(random.randint(100000, 999999))
         user.reset_token = kod
-        # Kodun ömrünü 10 dakika yapıyoruz (mobil için ideal süre)
         user.reset_token_expire = datetime.utcnow() + timedelta(minutes=10)
         await db.commit()
 
@@ -108,10 +104,9 @@ async def sifre_sifirla_talep(email: EmailStr, db: AsyncSession = Depends(get_db
 
     return {"mesaj": "Eğer e-posta adresi sistemde kayıtlıysa, 6 haneli sıfırlama kodu gönderildi."}
 
-# ---- RESET PASSWORD (KODU VE YENİ ŞİFREYİ ONAYLAR) ----
+# ---- RESET PASSWORD ----
 @router.post("/sifre-sifirla")
 async def sifre_sifirla(data: SifreSifirlaSchema, db: AsyncSession = Depends(get_db)):
-    # Maile, koda ve sürenin geçip geçmediğine bakıyoruz
     result = await db.execute(
         select(models.User).where(
             models.User.email == data.email,
@@ -120,11 +115,10 @@ async def sifre_sifirla(data: SifreSifirlaSchema, db: AsyncSession = Depends(get
         )
     )
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(status_code=400, detail="Girdiğiniz kod geçersiz veya süresi dolmuş.")
 
-    # Şifreyi hashle, güncelle ve alanları sıfırla
     user.sifre = hash_password(data.yeni_sifre)
     user.reset_token = None
     user.reset_token_expire = None
