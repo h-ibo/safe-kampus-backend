@@ -35,14 +35,14 @@ async def send_email(to: str, subject: str, html: str):
         
         # Burayı .env dosyasından dinamik okuyacak şekilde güncelledik!
         await aiosmtplib.send(
-            msg,
-            hostname=os.getenv("MAIL_SERVER"),
-            port=int(os.getenv("MAIL_PORT")),
-            username=os.getenv("MAIL_USERNAME"),
-            password=os.getenv("MAIL_PASSWORD"),
-            use_tls=False, # Port 587 (Brevo) için use_tls False, start_tls True olmalı
-            start_tls=True
-        )
+    msg,
+    hostname=os.getenv("MAIL_SERVER"),
+    port=465,
+    username=os.getenv("MAIL_USERNAME"),
+    password=os.getenv("MAIL_PASSWORD"),
+    use_tls=True,
+    start_tls=False
+)
         print(f"✅ Email başarıyla gönderildi: {to}")
     except Exception as e:
         print(f"❌ Email gönderim hatası: {e}")
