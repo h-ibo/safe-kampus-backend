@@ -15,4 +15,5 @@ passlib==1.7.4
 python-multipart==0.0.20
 argon2-cffi==25.1.0
 fastapi-mail==1.5.2
-exponent_server_sdk==2.2.0httpx==0.27.0
+exponent_server_sdk==2.2.0
+httpx==0.27.0
