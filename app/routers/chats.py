@@ -140,3 +140,37 @@ async def okundu_isle(
         m.okundu = True
     await db.commit()
     return {"okundu": len(mesajlar)}
+
+# ---------------------------
+# KONUŞMALARIM (Güvenlik için)
+# ---------------------------
+@router.get("/meta/konusmalarim")
+async def konusmalarim(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(models.Chat).where(
+            or_(
+                models.Chat.sender_id == current_user.id,
+                models.Chat.receiver_id == current_user.id
+            )
+        ).order_by(models.Chat.created_at.desc())
+    )
+    mesajlar = result.scalars().all()
+    
+    # Benzersiz kişileri bul
+    kisi_ids = set()
+    for m in mesajlar:
+        diger = m.receiver_id if m.sender_id == current_user.id else m.sender_id
+        kisi_ids.add(diger)
+    
+    konusmalar = []
+    for kisi_id in kisi_ids:
+        kisi_result = await db.execute(select(models.User).where(models.User.id == kisi_id))
+        kisi = kisi_result.scalar_one_or_none()
+        if kisi:
+            son_mesaj = next((m.mesaj for m in mesajlar if m.sender_id == kisi_id or m.receiver_id == kisi_id), None)
+            konusmalar.append({"id": kisi.id, "isim": kisi.isim, "rol": kisi.rol, "son_mesaj": son_mesaj})
+    
+    return konusmalar
