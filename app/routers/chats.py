@@ -87,3 +87,56 @@ async def ws(websocket: WebSocket, user_id: int):
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(user_id)
+# ---------------------------
+# GÜVENLİK LİSTESİ
+# ---------------------------
+@router.get("/guvenlik-listesi")
+async def guvenlik_listesi(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(models.User).where(
+            or_(models.User.rol == "guvenlik", models.User.rol == "admin")
+        )
+    )
+    return result.scalars().all()
+
+# ---------------------------
+# MESAJLARI GETİR
+# ---------------------------
+@router.get("/{diger_id}")
+async def mesajlari_getir(
+    diger_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(models.Chat).where(
+            or_(
+                and_(models.Chat.sender_id == current_user.id, models.Chat.receiver_id == diger_id),
+                and_(models.Chat.sender_id == diger_id, models.Chat.receiver_id == current_user.id)
+            )
+        ).order_by(models.Chat.created_at)
+    )
+    return result.scalars().all()
+
+# ---------------------------
+# OKUNDU İŞARETLE
+# ---------------------------
+@router.patch("/{diger_id}/okundu")
+async def okundu_isle(
+    diger_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(models.Chat).where(
+            and_(models.Chat.sender_id == diger_id, models.Chat.receiver_id == current_user.id, models.Chat.okundu == False)
+        )
+    )
+    mesajlar = result.scalars().all()
+    for m in mesajlar:
+        m.okundu = True
+    await db.commit()
+    return {"okundu": len(mesajlar)}
